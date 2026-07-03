@@ -1,6 +1,6 @@
 {
   "name": "claude-usage-meter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Calculate Claude Code token usage by reset-aligned windows.",
   "type": "commonjs",
   "keywords": [
