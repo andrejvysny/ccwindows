@@ -1,10 +1,10 @@
 {
-  "name": "ccwindows",
+  "name": "claude-usage-meter",
   "version": "0.1.0",
   "description": "Calculate Claude Code token usage by reset-aligned windows.",
   "type": "commonjs",
   "keywords": [
-    "ccwindows",
+    "claude-usage-meter",
     "claude",
     "claude-code",
     "usage",
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/andrejvysny/ccwindows#readme",
   "bin": {
-    "ccwindows": "bin/ccwindows.js"
+    "claude-usage-meter": "bin/claude-usage-meter.js"
   },
   "files": [
     "bin",

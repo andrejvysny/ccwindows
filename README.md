@@ -1,4 +1,4 @@
-# ccwindows
+# claude-usage-meter
 
 Calculate Claude Code token usage by weekly reset windows.
 
@@ -18,19 +18,19 @@ weighting in the displayed Stats total.
 After publishing:
 
 ```sh
-npx ccwindows --next-reset 2026-07-09T00:59:00+02:00
+npx claude-usage-meter --next-reset 2026-07-09T00:59:00+02:00
 ```
 
 That seeds `~/.claude/usage-windows.json`. Future runs can omit reset flags:
 
 ```sh
-npx ccwindows
+npx claude-usage-meter
 ```
 
 Or calculate the reset from separate weekday/time flags:
 
 ```sh
-npx ccwindows \
+npx claude-usage-meter \
   --reset-day Thu \
   --reset-time 00:59 \
   --timezone Europe/Bratislava
@@ -39,7 +39,7 @@ npx ccwindows \
 With validation windows matching Claude Stats:
 
 ```sh
-npx ccwindows \
+npx claude-usage-meter \
   --next-reset 2026-07-09T00:59:00+02:00 \
   --stats-windows
 ```
@@ -47,7 +47,7 @@ npx ccwindows \
 Split text output by model:
 
 ```sh
-npx ccwindows --by-model
+npx claude-usage-meter --by-model
 ```
 
 Before publishing, from this checkout:
@@ -59,7 +59,7 @@ npx /Users/andrejvysny/ccwindows
 JSON output:
 
 ```sh
-npx ccwindows \
+npx claude-usage-meter \
   --next-reset 2026-07-09T00:59:00+02:00 \
   --stats-windows \
   --json

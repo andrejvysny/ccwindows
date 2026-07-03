@@ -495,10 +495,10 @@ function printWindow(window, byModel) {
 
 function usage() {
   return `Usage:
-  npx ccwindows --next-reset 2026-07-09T00:59:00+02:00
-  npx ccwindows
-  npx ccwindows --reset-day Thu --reset-time 00:59 --timezone Europe/Bratislava
-  npx ccwindows --next-reset 2026-07-09T00:59:00+02:00 --stats-windows
+  npx claude-usage-meter --next-reset 2026-07-09T00:59:00+02:00
+  npx claude-usage-meter
+  npx claude-usage-meter --reset-day Thu --reset-time 00:59 --timezone Europe/Bratislava
+  npx claude-usage-meter --next-reset 2026-07-09T00:59:00+02:00 --stats-windows
 
 Options:
   --claude-dir <path>   Claude config dir. Default: ~/.claude
