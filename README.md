@@ -21,10 +21,16 @@ After publishing:
 npx claude-usage-meter --next-reset 2026-07-09T00:59:00+02:00
 ```
 
-That seeds `~/.claude/usage-windows.json`. Future runs can omit reset flags:
+That seeds `~/.claude/usage-windows.json`. Future runs can omit reset flags and show only the current weekly window:
 
 ```sh
 npx claude-usage-meter
+```
+
+List all weekly windows with usage data:
+
+```sh
+npx claude-usage-meter --all
 ```
 
 Or calculate the reset from separate weekday/time flags:
@@ -73,8 +79,10 @@ npx claude-usage-meter \
 - `--reset-day <day>`: compute reset from weekday, e.g. `Thu`
 - `--reset-time <HH:MM>`: compute reset from 24-hour local time, e.g. `00:59`
 - `--by-model`: print per-model token totals in text output
+- `--compact`: print numbers in compact form, e.g. `19m`, `120k`
 - `--now <date>`: override current time for repeatable checks.
-- `--windows <n>`: number of reset windows to print. Default: `8`
+- `--all`: list all weekly windows available on the system and their usage stats
+- `--windows <n>`: number of reset windows to print. Default: `1`
 - `--timezone <tz>`: display timezone. Default: local timezone
 - `--stats-windows`: print Last 7 days and Last 30 days calendar windows
 - `--json`: print machine-readable JSON
@@ -88,6 +96,12 @@ Claude Stats screenshots:
 
 - Last 7 days: `19,757,238` -> `19.8m`
 - Last 30 days: `123,102,698` -> `123.1m`
+
+Use `--compact` to show compact numbers in text output:
+
+```sh
+npx claude-usage-meter --stats-windows --compact
+```
 
 ## Publish
 

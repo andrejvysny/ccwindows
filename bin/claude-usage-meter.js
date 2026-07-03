@@ -26,10 +26,12 @@ const WEEKDAYS = {
 function parseArgs(argv) {
   const args = {
     claudeDir: path.join(os.homedir(), '.claude'),
-    windows: 8,
+    windows: 1,
     json: false,
     statsWindows: false,
+    all: false,
     byModel: false,
+    compact: false,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   };
 
@@ -38,6 +40,8 @@ function parseArgs(argv) {
     if (arg === '--json') args.json = true;
     else if (arg === '--by-model') args.byModel = true;
     else if (arg === '--stats-windows') args.statsWindows = true;
+    else if (arg === '--all') args.all = true;
+    else if (arg === '--compact') args.compact = true;
     else if (arg === '--help' || arg === '-h') args.help = true;
     else if (arg === '--claude-dir') args.claudeDir = requireValue(argv, ++index, arg);
     else if (arg === '--next-reset') args.nextReset = requireValue(argv, ++index, arg);
@@ -349,9 +353,26 @@ function calculateResetWindows(rows, nextReset, now, count, timezone) {
   const anchorMs = nextReset.getTime();
   const currentIndex = Math.floor((now.getTime() - anchorMs) / WEEK_MS);
   const firstIndex = currentIndex - count + 1;
+  return buildResetWindowBuckets(rows, anchorMs, firstIndex, currentIndex, now, timezone);
+}
+
+function calculateAllWindows(rows, nextReset, now, timezone) {
+  const anchorMs = nextReset.getTime();
+  const currentIndex = Math.floor((now.getTime() - anchorMs) / WEEK_MS);
+  let firstIndex = currentIndex;
+
+  for (const row of rows) {
+    const index = Math.floor((row.timestampMs - anchorMs) / WEEK_MS);
+    if (index < firstIndex) firstIndex = index;
+  }
+
+  return buildResetWindowBuckets(rows, anchorMs, firstIndex, currentIndex, now, timezone);
+}
+
+function buildResetWindowBuckets(rows, anchorMs, firstIndex, lastIndex, now, timezone) {
   const buckets = new Map();
 
-  for (let index = firstIndex; index <= currentIndex; index += 1) {
+  for (let index = firstIndex; index <= lastIndex; index += 1) {
     const startMs = anchorMs + index * WEEK_MS;
     buckets.set(index, createEmptyBucket(startMs, startMs + WEEK_MS, timezone));
   }
@@ -445,13 +466,31 @@ function formatDateTime(ms, timezone) {
   }).format(new Date(ms));
 }
 
-function formatNumber(value) {
+function formatNumber(value, compact) {
+  if (compact) return formatCompactNumber(value);
   return value.toLocaleString('en-US');
 }
 
+function formatCompactNumber(value) {
+  if (value >= 1_000_000) {
+    const scaled = value / 1_000_000;
+    return `${scaled >= 100 ? Math.round(scaled) : stripTrailingZero(scaled.toFixed(1))}m`;
+  }
+  if (value >= 1_000) {
+    const scaled = value / 1_000;
+    return `${scaled >= 100 ? Math.round(scaled) : stripTrailingZero(scaled.toFixed(1))}k`;
+  }
+  return value.toLocaleString('en-US');
+}
+
+function stripTrailingZero(value) {
+  return value.replace(/\.0$/, '');
+}
+
 function printText(result) {
+  const compact = result.compact;
   console.log(`Claude dir: ${result.claudeDir}`);
-  console.log(`Rows loaded: ${formatNumber(result.rowsLoaded)}`);
+  console.log(`Rows loaded: ${formatNumber(result.rowsLoaded, compact)}`);
   console.log(`Metric: input_tokens + output_tokens (Claude Stats-style)`);
   if (result.nextReset) {
     console.log(`Next reset: ${result.nextResetLocal} (${result.nextResetSource})`);
@@ -459,36 +498,36 @@ function printText(result) {
 
   if (result.resetWindows.length > 0) {
     console.log('\nReset windows');
-    for (const window of result.resetWindows) printWindow(window, result.byModel);
+    for (const window of result.resetWindows) printWindow(window, result.byModel, compact);
   }
 
   if (result.statsWindows.length > 0) {
     console.log('\nStats windows');
-    for (const window of result.statsWindows) printWindow(window, result.byModel);
+    for (const window of result.statsWindows) printWindow(window, result.byModel, compact);
   }
 }
 
-function printWindow(window, byModel) {
+function printWindow(window, byModel, compact) {
   const label = window.name || `${window.startLocal} -> ${window.endLocal}`;
   console.log(`\n${label} [${window.status}]`);
   if (window.source) console.log(`  source: ${window.source}`);
-  console.log(`  tokens: ${formatNumber(window.statsTokens)}`);
+  console.log(`  tokens: ${formatNumber(window.statsTokens, compact)}`);
   if (window.inputOutputComplete === false) {
     console.log(`  input/output: partial only for uncached raw days`);
   } else {
-    console.log(`  input: ${formatNumber(window.inputTokens)}  output: ${formatNumber(window.outputTokens)}`);
+    console.log(`  input: ${formatNumber(window.inputTokens, compact)}  output: ${formatNumber(window.outputTokens, compact)}`);
   }
-  console.log(`  rows: ${formatNumber(window.rows)}  sessions: ${formatNumber(window.sessions)}`);
+  console.log(`  rows: ${formatNumber(window.rows, compact)}  sessions: ${formatNumber(window.sessions, compact)}`);
   if (window.cacheFieldsComplete === false) {
     console.log(`  cache read/create: partial only for uncached raw days`);
   } else {
-    console.log(`  cache read/create: ${formatNumber(window.cacheReadTokens)} / ${formatNumber(window.cacheCreateTokens)}`);
+    console.log(`  cache read/create: ${formatNumber(window.cacheReadTokens, compact)} / ${formatNumber(window.cacheCreateTokens, compact)}`);
   }
 
   if (byModel) {
     const models = Object.entries(window.byModel).sort((a, b) => b[1].statsTokens - a[1].statsTokens);
     for (const [model, usage] of models) {
-      console.log(`  ${model}: ${formatNumber(usage.statsTokens)}`);
+      console.log(`  ${model}: ${formatNumber(usage.statsTokens, compact)}`);
     }
   }
 }
@@ -507,8 +546,10 @@ Options:
   --reset-day <day>     Compute reset from weekday, e.g. Thu
   --reset-time <HH:MM>  Compute reset from 24-hour local time, e.g. 00:59
   --by-model            Print token split by model
+  --compact             Print numbers in compact form (19m, 120k)
   --now <date>          Override current time for repeatable checks.
-  --windows <n>         Reset windows to print. Default: 8
+  --all                 List all weekly windows with usage data (and empty windows in between)
+  --windows <n>         Reset windows to print. Default: 1
   --timezone <tz>       Display timezone. Default: local timezone
   --stats-windows       Also print official Stats-style Last 7/30 day windows
   --json                Print JSON
@@ -528,12 +569,14 @@ function main() {
   const statsCache = readStatsCache(args.claudeDir);
   const reset = resolveNextReset(args, now);
   const resetWindows = reset.nextReset
-    ? calculateResetWindows(rows, reset.nextReset, now, args.windows, args.timezone)
+    ? args.all
+      ? calculateAllWindows(rows, reset.nextReset, now, args.timezone)
+      : calculateResetWindows(rows, reset.nextReset, now, args.windows, args.timezone)
     : [];
   const statsWindows = args.statsWindows ? calculateStatsWindows(rows, now, args.timezone, statsCache) : [];
 
   if (!reset.nextReset && !args.statsWindows) {
-    throw new Error('Provide --next-reset, saved config, --reset-day/--reset-time, and/or --stats-windows');
+    throw new Error('Provide --next-reset, saved config, --reset-day/--reset-time, --all, and/or --stats-windows');
   }
 
   const result = {
@@ -543,6 +586,7 @@ function main() {
     nextResetLocal: reset.nextReset ? formatDateTime(reset.nextReset.getTime(), args.timezone) : null,
     nextResetSource: reset.source,
     byModel: args.byModel,
+    compact: args.compact,
     rowsLoaded: rows.length,
     resetWindows,
     statsWindows,
