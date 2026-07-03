@@ -1,0 +1,37 @@
+{
+  "name": "ccwindows",
+  "version": "0.1.0",
+  "description": "Calculate Claude Code token usage by reset-aligned windows.",
+  "type": "commonjs",
+  "keywords": [
+    "ccwindows",
+    "claude",
+    "claude-code",
+    "usage",
+    "tokens",
+    "anthropic"
+  ],
+  "author": "Andrej Vysny",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrejvysny/ccwindows.git"
+  },
+  "bugs": {
+    "url": "https://github.com/andrejvysny/ccwindows/issues"
+  },
+  "homepage": "https://github.com/andrejvysny/ccwindows#readme",
+  "bin": {
+    "ccwindows": "bin/ccwindows.js"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT"
+}
